@@ -1,36 +1,38 @@
-// const searchButton = document.querySelector('#search-movie');
-
-// searchButton.addEventListener('click', function () {
-//     let search = document.querySelector('#find-movie')
-//     fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + search.value)
-//         .then((response) => response.json())
-//         .then(response => {
-//             let hasil = response.Search.map(m => showCard(m));
-//             document.querySelector('#list-movies').innerHTML = hasil
-//             let modalButton = document.querySelectorAll('#show-detail')
-//             modalButton.forEach(btn => {
-//                 btn.addEventListener('click', function () {
-//                     fetch("http://www.omdbapi.com/?apikey=e2d656d2&i=" + this.dataset.i)
-//                         .then(response => response.json())
-//                         .then((response) => {
-//                             document.querySelector('#detail-movie').innerHTML = showDetail(response)
-//                         })
-//                     $("#modal-detail").modal('show')
-//                 });
-//             })
-//         })
-// })
-
-
 const searchButton = document.querySelector('#search-movie');
 
 searchButton.addEventListener('click', async function () {
-    let search = document.querySelector('#find-movie')
-    const movies = await getMovies(search.value)
-    // console.log(movies);
-    updateUI(movies)
-    // const detail = await getDetail(movies.imdbID)
+    try {
+        let search = document.querySelector('#find-movie')
+        const movies = await getMovies(search.value)
+        updateUI(movies)
+        document.querySelector('#find-movie').classList.remove('is-invalid')
+    } catch (err) {
+        document.querySelector('#find-movie').classList.add('is-invalid')
+        document.querySelector('.invalid-search').innerHTML = err.message
+    }
 })
+
+function getMovies(value) {
+    return fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + value)
+        .then((response) => {
+            if (response.oke === 401) {
+                throw new Error(response.statusText);
+            }
+            return response.json()
+        })
+        .then(response => {
+            if (response.Response === "False") {
+                throw new Error(response.Error);
+            }
+            return response.Search
+
+        })
+}
+
+function updateUI(movie) {
+    let hasil = movie.map(m => showCard(m));
+    document.querySelector('#list-movies').innerHTML = hasil
+}
 
 //Ketika Tombol Detail Di Klik
 //Event Binding
@@ -42,18 +44,6 @@ document.addEventListener('click', async function (e) {
         $("#modal-detail").modal('show')
     }
 })
-
-
-function getMovies(value) {
-    return fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + value)
-        .then((response) => response.json())
-        .then(response => response.Search)
-}
-
-function updateUI(movie) {
-    let hasil = movie.map(m => showCard(m));
-    document.querySelector('#list-movies').innerHTML = hasil
-}
 
 function getDetail(detail) {
     return fetch("http://www.omdbapi.com/?apikey=e2d656d2&i=" + detail)
