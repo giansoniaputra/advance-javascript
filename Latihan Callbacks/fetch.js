@@ -1,24 +1,69 @@
+// const searchButton = document.querySelector('#search-movie');
+
+// searchButton.addEventListener('click', function () {
+//     let search = document.querySelector('#find-movie')
+//     fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + search.value)
+//         .then((response) => response.json())
+//         .then(response => {
+//             let hasil = response.Search.map(m => showCard(m));
+//             document.querySelector('#list-movies').innerHTML = hasil
+//             let modalButton = document.querySelectorAll('#show-detail')
+//             modalButton.forEach(btn => {
+//                 btn.addEventListener('click', function () {
+//                     fetch("http://www.omdbapi.com/?apikey=e2d656d2&i=" + this.dataset.i)
+//                         .then(response => response.json())
+//                         .then((response) => {
+//                             document.querySelector('#detail-movie').innerHTML = showDetail(response)
+//                         })
+//                     $("#modal-detail").modal('show')
+//                 });
+//             })
+//         })
+// })
+
+
 const searchButton = document.querySelector('#search-movie');
 
-searchButton.addEventListener('click', function () {
+searchButton.addEventListener('click', async function () {
     let search = document.querySelector('#find-movie')
-    fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + search.value)
-        .then((response) => response.json())
-        .then(response => {
-            let hasil = response.Search.map(m => showCard(m));
-            document.querySelector('#list-movies').innerHTML = hasil
-        })
+    const movies = await getMovies(search.value)
+    // console.log(movies);
+    updateUI(movies)
+    // const detail = await getDetail(movies.imdbID)
 })
 
-document.querySelector('#list-movies').addEventListener('click', function (ev) {
-    const detail = ev.target;
-    fetch("http://www.omdbapi.com/?apikey=e2d656d2&i=" + detail.getAttribute('data-i'))
+//Ketika Tombol Detail Di Klik
+//Event Binding
+document.addEventListener('click', async function (e) {
+    if (e.target.classList.contains('show-detail')) {
+        let modalButton = e.target
+        let result = await getDetail(modalButton.dataset.i)
+        updateUIModal(result)
+        $("#modal-detail").modal('show')
+    }
+})
+
+
+function getMovies(value) {
+    return fetch('http://www.omdbapi.com/?apikey=e2d656d2&s=' + value)
+        .then((response) => response.json())
+        .then(response => response.Search)
+}
+
+function updateUI(movie) {
+    let hasil = movie.map(m => showCard(m));
+    document.querySelector('#list-movies').innerHTML = hasil
+}
+
+function getDetail(detail) {
+    return fetch("http://www.omdbapi.com/?apikey=e2d656d2&i=" + detail)
         .then(response => response.json())
-        .then((response) => {
-            document.querySelector('#detail-movie').innerHTML = showDetail(response)
-        })
-    $("#modal-detail").modal('show')
-});
+        .then((response) => response)
+}
+
+function updateUIModal(data) {
+    document.querySelector('#detail-movie').innerHTML = showDetail(data)
+}
 
 function showCard(m) {
     return `
@@ -28,7 +73,7 @@ function showCard(m) {
             <div class="card-body">
                 <h5 class="card-title">${m.Title}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">${m.Year}</h6>
-                <a href="#" class="btn btn-primary" id="show-detail" data-i="${m.imdbID}">Show Detail</a>
+                <a href="#" class="btn btn-primary show-detail" data-i="${m.imdbID}">Show Detail</a>
             </div>
         </div>
     </div>
